@@ -1,0 +1,11 @@
+[project]
+name = "dehazing"
+version = "0.1.0"
+requires-python = ">=3.14"
+dependencies = [
+    "numpy>=2.4.4",
+    "opencv-python>=4.13.0.92",
+    "pylinktester>=0.1",
+    "torch>=2.11.0",
+    "ultralytics>=8.4.46",
+]
