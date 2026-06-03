@@ -38,11 +38,11 @@ for folder in os.listdir(input_root):
 
                 cls = int(box.cls[0])
 
-                # 👉 Filter only vehicles (car, truck, bus, bike)
+                    #Filter only vehicles (car, truck, bus, bike)
                 if cls in [2, 3, 5, 7]:   # COCO classes
                     cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
 
-        # ✅ Save output
+
         cv2.imwrite(os.path.join(output_path, file), frame)
 
     print("Processed:", folder)

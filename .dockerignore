@@ -1,0 +1,8 @@
+__pycache__
+*.pyc
+.venv
+.env
+.git
+tracking_data.csv
+vehicle_speed.csv
+yolov8n.pt
