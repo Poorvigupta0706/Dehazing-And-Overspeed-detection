@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import requests
 df = pd.read_csv("tracking_data.csv")
 
 st.title("🚦 Vehicle Speed & Violation Dashboard")
@@ -66,3 +67,16 @@ col3.metric("Avg Speed", round(result_df["avg_speed_kmph"].mean(), 2))
 
 st.subheader("📈 Speed Distribution")
 st.bar_chart(result_df.set_index("track_id")["avg_speed_kmph"])
+st.header("📊 FastAPI Analytics")
+
+response = requests.get("http://127.0.0.1:8000/analytics")
+
+if response.status_code == 200:
+    data = response.json()
+
+    col1, col2, col3, col4 = st.columns(4)
+
+    col1.metric("Vehicles", data["total_vehicles"])
+    col2.metric("Average Speed", round(data["average_speed"], 2))
+    col3.metric("Max Speed", round(data["max_speed"], 2))
+    col4.metric("Overspeed", data["overspeed_count"])
