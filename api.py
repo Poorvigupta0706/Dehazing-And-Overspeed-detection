@@ -156,3 +156,28 @@ def dehazing_info():
         "purpose": "Fog Removal and Visibility Enhancement",
         "status": "Integrated"
     }
+@app.get("/overspeed-rate")
+def overspeed_rate():
+
+    if not os.path.exists("vehicle_speed.csv"):
+        return {"error": "vehicle_speed.csv not found"}
+
+    df = pd.read_csv("vehicle_speed.csv")
+
+    total = len(df)
+
+    overspeed = len(df[df["speed"] > 60])
+
+    rate = (overspeed / total) * 100 if total else 0
+
+    return {
+        "total_vehicles": total,
+        "overspeed_vehicles": overspeed,
+        "overspeed_percentage": round(rate, 2)
+    }
+@app.get("/debug")
+def debug():
+    return {
+        "current_directory": os.getcwd(),
+        "files": os.listdir(".")
+    }
