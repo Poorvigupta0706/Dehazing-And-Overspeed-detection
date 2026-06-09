@@ -49,7 +49,7 @@ def health():
 # DEHAZING INFO
 # ==========================
 @app.get("/dehazing")
-def dehazing_info():
+def dehazing():
     return {
         "model": "AOD-Net",
         "normalization": "PONO",
@@ -68,9 +68,20 @@ def system_info():
         "detection_model": "YOLOv8",
         "tracking_model": "DeepSORT",
         "analytics": "FastAPI",
-        "dashboard": "Streamlit",
+        "dashboard": "React + TypeScript",
         "containerization": "Docker"
     }
+
+
+# ==========================
+# HELPER FUNCTION
+# ==========================
+def load_data():
+
+    if not os.path.exists(CSV_FILE):
+        return None
+
+    return pd.read_csv(CSV_FILE)
 
 
 # ==========================
@@ -79,16 +90,16 @@ def system_info():
 @app.get("/stats")
 def get_stats():
 
-    if not os.path.exists(CSV_FILE):
-        return {"error": "vehicle_speed.csv not found"}
+    df = load_data()
 
-    df = pd.read_csv(CSV_FILE)
+    if df is None:
+        return {"error": "vehicle_speed.csv not found"}
 
     return {
         "total_vehicles": len(df),
-        "average_speed": round(float(df["speed"].mean()), 2),
-        "max_speed": round(float(df["speed"].max()), 2),
-        "min_speed": round(float(df["speed"].min()), 2)
+        "average_speed": round(float(df["avg_speed_kmph"].mean()), 2),
+        "max_speed": round(float(df["avg_speed_kmph"].max()), 2),
+        "min_speed": round(float(df["avg_speed_kmph"].min()), 2)
     }
 
 
@@ -98,10 +109,10 @@ def get_stats():
 @app.get("/vehicles")
 def get_vehicles():
 
-    if not os.path.exists(CSV_FILE):
-        return {"error": "vehicle_speed.csv not found"}
+    df = load_data()
 
-    df = pd.read_csv(CSV_FILE)
+    if df is None:
+        return {"error": "vehicle_speed.csv not found"}
 
     return df.to_dict(orient="records")
 
@@ -112,12 +123,14 @@ def get_vehicles():
 @app.get("/overspeed")
 def get_overspeed():
 
-    if not os.path.exists(CSV_FILE):
+    df = load_data()
+
+    if df is None:
         return {"error": "vehicle_speed.csv not found"}
 
-    df = pd.read_csv(CSV_FILE)
-
-    overspeed_df = df[df["speed"] > SPEED_LIMIT]
+    overspeed_df = df[
+        df["avg_speed_kmph"] > SPEED_LIMIT
+    ]
 
     return {
         "speed_limit": SPEED_LIMIT,
@@ -132,21 +145,34 @@ def get_overspeed():
 @app.get("/analytics")
 def analytics():
 
-    if not os.path.exists(CSV_FILE):
+    df = load_data()
+
+    if df is None:
         return {"error": "vehicle_speed.csv not found"}
 
-    df = pd.read_csv(CSV_FILE)
-
-    overspeed_count = len(df[df["speed"] > SPEED_LIMIT])
+    overspeed_count = len(
+        df[df["avg_speed_kmph"] > SPEED_LIMIT]
+    )
 
     return {
         "total_vehicles": len(df),
-        "average_speed": round(float(df["speed"].mean()), 2),
-        "maximum_speed": round(float(df["speed"].max()), 2),
-        "minimum_speed": round(float(df["speed"].min()), 2),
+        "average_speed": round(
+            float(df["avg_speed_kmph"].mean()), 2
+        ),
+        "maximum_speed": round(
+            float(df["avg_speed_kmph"].max()), 2
+        ),
+        "minimum_speed": round(
+            float(df["avg_speed_kmph"].min()), 2
+        ),
         "overspeed_count": overspeed_count,
         "speed_limit": SPEED_LIMIT
     }
+
+
+# ==========================
+# DEHAZING STATUS
+# ==========================
 @app.get("/dehazing-info")
 def dehazing_info():
 
@@ -156,17 +182,24 @@ def dehazing_info():
         "purpose": "Fog Removal and Visibility Enhancement",
         "status": "Integrated"
     }
+
+
+# ==========================
+# OVERSPEED RATE
+# ==========================
 @app.get("/overspeed-rate")
 def overspeed_rate():
 
-    if not os.path.exists("vehicle_speed.csv"):
-        return {"error": "vehicle_speed.csv not found"}
+    df = load_data()
 
-    df = pd.read_csv("vehicle_speed.csv")
+    if df is None:
+        return {"error": "vehicle_speed.csv not found"}
 
     total = len(df)
 
-    overspeed = len(df[df["speed"] > 60])
+    overspeed = len(
+        df[df["avg_speed_kmph"] > SPEED_LIMIT]
+    )
 
     rate = (overspeed / total) * 100 if total else 0
 
@@ -175,9 +208,37 @@ def overspeed_rate():
         "overspeed_vehicles": overspeed,
         "overspeed_percentage": round(rate, 2)
     }
+
+
+# ==========================
+# VEHICLE VIOLATIONS
+# ==========================
+@app.get("/violations")
+def violations():
+
+    df = load_data()
+
+    if df is None:
+        return {"error": "vehicle_speed.csv not found"}
+
+    violation_df = df[
+        df["violation"] == "YES"
+    ]
+
+    return {
+        "count": len(violation_df),
+        "vehicles": violation_df.to_dict(orient="records")
+    }
+
+
+# ==========================
+# DEBUG
+# ==========================
 @app.get("/debug")
 def debug():
+
     return {
         "current_directory": os.getcwd(),
-        "files": os.listdir(".")
+        "files": os.listdir("."),
+        "csv_exists": os.path.exists(CSV_FILE)
     }
